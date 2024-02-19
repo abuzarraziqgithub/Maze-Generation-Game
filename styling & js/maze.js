@@ -1,22 +1,20 @@
-"use strict";
 function rand(max) {
   return Math.floor(Math.random() * max);
 }
-// prettier-ignore
+
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i]], [a[j]] = [a[j]], [a[i]];
+    [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 }
 
 function changeBrightness(factor, sprite) {
-  var virtCanvs = document.createElement("canvas");
-  virtCanvs.width = 500;
-  virtCanvs.height = 500;
-
-  var context = virtCanvs.getContext("2d");
+  var virtCanvas = document.createElement("canvas");
+  virtCanvas.width = 500;
+  virtCanvas.height = 500;
+  var context = virtCanvas.getContext("2d");
   context.drawImage(sprite, 0, 0, 500, 500);
 
   var imgData = context.getImageData(0, 0, 500, 500);
@@ -29,17 +27,17 @@ function changeBrightness(factor, sprite) {
   context.putImageData(imgData, 0, 0);
 
   var spriteOutput = new Image();
-  spriteOutput.src = virtCanvs.toDataURL();
-  virtCanvs.remove();
+  spriteOutput.src = virtCanvas.toDataURL();
+  virtCanvas.remove();
   return spriteOutput;
 }
 
 function displayVictoryMess(moves) {
-  document.getElementById("moves").innerHTML = "You Moved" + moves + "Steps.";
-  toggleVisability("Message-container");
+  document.getElementById("moves").innerHTML = "You Moved " + moves + " Steps.";
+  toggleVisablity("Message-Container");
 }
 
-function toggleVisability(id) {
+function toggleVisablity(id) {
   if (document.getElementById(id).style.visibility == "visible") {
     document.getElementById(id).style.visibility = "hidden";
   } else {
@@ -60,7 +58,7 @@ function Maze(Width, Height) {
       o: "s",
     },
     s: {
-      y: "1",
+      y: 1,
       x: 0,
       o: "n",
     },
@@ -75,6 +73,7 @@ function Maze(Width, Height) {
       o: "e",
     },
   };
+
   this.map = function () {
     return mazeMap;
   };
@@ -89,7 +88,6 @@ function Maze(Width, Height) {
     mazeMap = new Array(height);
     for (y = 0; y < height; y++) {
       mazeMap[y] = new Array(width);
-
       for (x = 0; x < width; ++x) {
         mazeMap[y][x] = {
           n: false,
@@ -102,119 +100,113 @@ function Maze(Width, Height) {
       }
     }
   }
-}
 
-function defineMaze() {
-  var isComp = false;
-  var move = false;
-  var cellsVisited = 1;
-  var numLoops = 0;
-  var maxLoops = 0;
-  var pos = {
-    x: 0,
-    y: 0,
-  };
+  function defineMaze() {
+    var isComp = false;
+    var move = false;
+    var cellsVisited = 1;
+    var numLoops = 0;
+    var maxLoops = 0;
+    var pos = {
+      x: 0,
+      y: 0,
+    };
+    var numCells = width * height;
+    while (!isComp) {
+      move = false;
+      mazeMap[pos.x][pos.y].visited = true;
 
-  var numCells = maze.map().length * maze.map()[0].length; // Corrected: accessing the maze dimensions using `maze.map()`
-  while (!isComp) {
-    move = false;
-    maze.map()[pos.x][pos.y].visited = true; // Corrected: accessing the maze using `maze.map()`
+      if (numLoops >= maxLoops) {
+        shuffle(dirs);
+        maxLoops = Math.round(rand(height / 8));
+        numLoops = 0;
+      }
+      numLoops++;
+      for (index = 0; index < dirs.length; index++) {
+        var direction = dirs[index];
+        var nx = pos.x + modDir[direction].x;
+        var ny = pos.y + modDir[direction].y;
 
-    if (numLoops >= maxLoops) {
-      shuffle(dirs);
-      maxLoops = Math.round(rand(maze.map()[0].length / 8)); // Corrected: accessing the maze dimensions using `maze.map()`
-      numLoops = 0;
-    }
-    numLoops++;
+        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+          //Check if the tile is already visited
+          if (!mazeMap[nx][ny].visited) {
+            //Carve through walls from this tile to next
+            mazeMap[pos.x][pos.y][direction] = true;
+            mazeMap[nx][ny][modDir[direction].o] = true;
 
-    for (var index = 0; index < dirs.length; index++) {
-      // Corrected: declare `index` using `var`
-      var direction = dirs[index];
-      var nx = pos.x + modDir[direction].x;
-      var ny = pos.y + modDir[direction].y;
-
-      if (
-        nx >= 0 &&
-        nx < maze.map().length &&
-        ny >= 0 &&
-        ny < maze.map()[0].length
-      ) {
-        // Corrected: accessing the maze dimensions using `maze.map()`
-        // Check if the tile is already visited
-        if (!maze.map()[nx][ny].visited) {
-          // Corrected: accessing the maze using `maze.map()`
-          // Carve through walls from this tile to next
-          maze.map()[pos.x][pos.y][direction] = true; // Corrected: accessing the maze using `maze.map()`
-          maze.map()[nx][ny][modDir[direction].o] = true; // Corrected: accessing the maze using `maze.map()`
-
-          // set Currentcell as next cells Prior visited
-          maze.map()[nx][ny].priorPos = pos; // Corrected: accessing the maze using `maze.map()`
-          // update Cell position to newly visited location
-          pos = {
-            x: nx,
-            y: ny,
-          };
-          cellsVisited++;
-          // Recursively call this method on the next tile
-          move = true;
-          break;
+            //Set Currentcell as next cells Prior visited
+            mazeMap[nx][ny].priorPos = pos;
+            //Update Cell position to newly visited location
+            pos = {
+              x: nx,
+              y: ny,
+            };
+            cellsVisited++;
+            //Recursively call this method on the next tile
+            move = true;
+            break;
+          }
         }
       }
-    }
-    if (!move) {
-      // if it failed to find a direction
-      // move the current position back to the prior cell and recall the method.
-      pos = maze.map()[pos.x][pos.y].priorPos; // Corrected: accessing the maze using `maze.map()`
-    }
-    if (numCells == cellsVisited) {
-      isComp = true;
-    }
-  }
-}
 
-function defineStartEnd() {
-  switch (rand(4)) {
-    case 0:
-      startCoord = {
-        x: 0,
-        y: 0,
-      };
-      endCoord = {
-        x: height - 1,
-        y: width - 1,
-      };
-      break;
-    case 1:
-      startCoord = {
-        x: 0,
-        y: width - 1,
-      };
-      endCoord = {
-        x: height - 1,
-        y: 0,
-      };
-      break;
-    case 2:
-      startCoord = {
-        x: height - 1,
-        y: 0,
-      };
-      endCoord = {
-        x: 0,
-        y: width - 1,
-      };
-      break;
-    case 3:
-      startCoord = {
-        x: height - 1,
-        y: width - 1,
-      };
-      endCoord = {
-        x: 0,
-        y: 0,
-      };
-      break;
+      if (!move) {
+        //  If it failed to find a direction,
+        //  move the current position back to the prior cell and Recall the method.
+        pos = mazeMap[pos.x][pos.y].priorPos;
+      }
+      if (numCells == cellsVisited) {
+        isComp = true;
+      }
+    }
   }
+
+  function defineStartEnd() {
+    switch (rand(4)) {
+      case 0:
+        startCoord = {
+          x: 0,
+          y: 0,
+        };
+        endCoord = {
+          x: height - 1,
+          y: width - 1,
+        };
+        break;
+      case 1:
+        startCoord = {
+          x: 0,
+          y: width - 1,
+        };
+        endCoord = {
+          x: height - 1,
+          y: 0,
+        };
+        break;
+      case 2:
+        startCoord = {
+          x: height - 1,
+          y: 0,
+        };
+        endCoord = {
+          x: 0,
+          y: width - 1,
+        };
+        break;
+      case 3:
+        startCoord = {
+          x: height - 1,
+          y: width - 1,
+        };
+        endCoord = {
+          x: 0,
+          y: 0,
+        };
+        break;
+    }
+  }
+
+  genMap();
+  defineStartEnd();
   defineMaze();
 }
 
@@ -230,6 +222,7 @@ function DrawMaze(Maze, ctx, cellsize, endSprite = null) {
     drawMap();
     drawEndMethod();
   };
+
   function drawCell(xCord, yCord, cell) {
     var x = xCord * cellSize;
     var y = yCord * cellSize;
@@ -243,6 +236,12 @@ function DrawMaze(Maze, ctx, cellsize, endSprite = null) {
     if (cell.s === false) {
       ctx.beginPath();
       ctx.moveTo(x, y + cellSize);
+      ctx.lineTo(x + cellSize, y + cellSize);
+      ctx.stroke();
+    }
+    if (cell.e === false) {
+      ctx.beginPath();
+      ctx.moveTo(x + cellSize, y);
       ctx.lineTo(x + cellSize, y + cellSize);
       ctx.stroke();
     }
@@ -280,9 +279,9 @@ function DrawMaze(Maze, ctx, cellsize, endSprite = null) {
           fraction
         );
         if (colorSwap) {
-          ctx.fillStyle = "rgba(0,0,0,0.8)";
+          ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
         } else {
-          ctx.fillStyle = "rgba(255,255,255,0.8)";
+          ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
         }
         ctx.fill();
         colorSwap = !colorSwap;
@@ -321,6 +320,7 @@ function DrawMaze(Maze, ctx, cellsize, endSprite = null) {
   drawMap();
   drawEndMethod();
 }
+
 function Player(maze, c, _cellsize, onComplete, sprite = null) {
   var ctx = c.getContext("2d");
   var drawSprite;
@@ -339,7 +339,7 @@ function Player(maze, c, _cellsize, onComplete, sprite = null) {
   var halfCellSize = cellSize / 2;
 
   this.redrawPlayer = function (_cellsize) {
-    var cellSize = _cellsize;
+    cellSize = _cellsize;
     drawSpriteImg(cellCoords);
   };
 
@@ -356,7 +356,7 @@ function Player(maze, c, _cellsize, onComplete, sprite = null) {
     ctx.fill();
     if (coord.x === maze.endCoord().x && coord.y === maze.endCoord().y) {
       onComplete(moves);
-      player.ubindKeyDown();
+      player.unbindKeyDown();
     }
   }
 
@@ -376,18 +376,21 @@ function Player(maze, c, _cellsize, onComplete, sprite = null) {
     );
     if (coord.x === maze.endCoord().x && coord.y === maze.endCoord().y) {
       onComplete(moves);
-      player.ubindKeyDown();
+      player.unbindKeyDown();
     }
   }
+
   function removeSprite(coord) {
     var offsetLeft = cellSize / 50;
     var offsetRight = cellSize / 25;
     ctx.clearRect(
       coord.x * cellSize + offsetLeft,
       coord.y * cellSize + offsetLeft,
+      cellSize - offsetRight,
       cellSize - offsetRight
     );
   }
+
   function check(e) {
     var cell = map[cellCoords.x][cellCoords.y];
     moves++;
@@ -426,7 +429,7 @@ function Player(maze, c, _cellsize, onComplete, sprite = null) {
         }
         break;
       case 83:
-      case 40:
+      case 40: // south
         if (cell.s == true) {
           removeSprite(cellCoords);
           cellCoords = {
@@ -478,31 +481,38 @@ function Player(maze, c, _cellsize, onComplete, sprite = null) {
       threshold: 0,
     });
   };
-  this.ubindKeyDown = function () {
+
+  this.unbindKeyDown = function () {
     window.removeEventListener("keydown", check, false);
     $("#view").swipe("destroy");
   };
 
-  var mazeCanvas = document.getElementById("mazeCanvas");
-  var ctx = mazeCanvas.getContext("2d");
-  var sprite;
-  var finishSprite;
-  var maze, draw, player;
-  var cellSize;
-  var difficulty;
-  sprite.src = "./house.png";
+  drawSprite(maze.startCoord());
 
-  window.onload = function () {
-    let viewWidth = $("#view").width();
-    let viewHeight = $("#view").height();
-    if (viewHeight < viewWidth) {
-      ctx.canvas.width = viewHeight - viewHeight / 100;
-      ctx.canvas.height = viewHeight - viewHeight / 100;
-    } else ctx.canvas.width = viewWidth - viewWidth / 100;
+  this.bindKeyDown();
+}
+
+var mazeCanvas = document.getElementById("mazeCanvas");
+var ctx = mazeCanvas.getContext("2d");
+var sprite;
+var finishSprite;
+var maze, draw, player;
+var cellSize;
+var difficulty;
+// sprite.src = 'media/sprite.png';
+
+window.onload = function () {
+  let viewWidth = $("#view").width();
+  let viewHeight = $("#view").height();
+  if (viewHeight < viewWidth) {
+    ctx.canvas.width = viewHeight - viewHeight / 100;
+    ctx.canvas.height = viewHeight - viewHeight / 100;
+  } else {
+    ctx.canvas.width = viewWidth - viewWidth / 100;
     ctx.canvas.height = viewWidth - viewWidth / 100;
-  };
+  }
 
-  // Load and edit sprites
+  //Load and edit sprites
   var completeOne = false;
   var completeTwo = false;
   var isComplete = () => {
@@ -513,9 +523,8 @@ function Player(maze, c, _cellsize, onComplete, sprite = null) {
       }, 500);
     }
   };
-
   sprite = new Image();
-  sprite.src = "./key.png" + "?" + new Date().setTime();
+  sprite.src = "./key.png" + "?" + new Date().getTime();
   sprite.setAttribute("crossOrigin", " ");
   sprite.onload = function () {
     sprite = changeBrightness(1.2, sprite);
@@ -533,37 +542,37 @@ function Player(maze, c, _cellsize, onComplete, sprite = null) {
     console.log(completeTwo);
     isComplete();
   };
+};
 
-  window.onresize = function () {
-    let viewWidth = $("#view").width();
-    let viewHeight = $("#view").height();
-    if (viewHeight < viewWidth) {
-      ctx.canvas.width = viewHeight - viewHeight / 100;
-      ctx.canvas.height = viewHeight - viewHeight / 100;
-    } else {
-      ctx.canvas.width = viewWidth - viewWidth / 100;
-      ctx.canvas.height = viewWidth - viewWidth / 100;
-    }
-    cellSize = mazeCanvas.width / difficulty;
-    if (player != null) {
-      draw.redrawMaze(cellSize);
-      player.redrawPlayer(cellSize);
-    }
-  };
+window.onresize = function () {
+  let viewWidth = $("#view").width();
+  let viewHeight = $("#view").height();
+  if (viewHeight < viewWidth) {
+    ctx.canvas.width = viewHeight - viewHeight / 100;
+    ctx.canvas.height = viewHeight - viewHeight / 100;
+  } else {
+    ctx.canvas.width = viewWidth - viewWidth / 100;
+    ctx.canvas.height = viewWidth - viewWidth / 100;
+  }
+  cellSize = mazeCanvas.width / difficulty;
+  if (player != null) {
+    draw.redrawMaze(cellSize);
+    player.redrawPlayer(cellSize);
+  }
+};
 
-  function makeMaze() {
-    if (player != undefined) {
-      player.ubindKeyDown();
-      player = null;
-    }
-    var e = document.getElementById("diffSelect");
-    difficulty = e.options[e.selectedIndex].value;
-    cellSize = mazeCanvas.width / difficulty;
-    maze = new Maze(difficulty, difficulty);
-    draw = new DrawMaze(maze, ctx, cellSize, finishSprite);
-    player = new Player(maze, mazeCanvas, cellSize, displayVictoryMess, sprite);
-    if (document.getElementById("mazeContainer").style.opacity < "100") {
-      document.getElementById("mazeContainer").style.opacity = "100";
-    }
+function makeMaze() {
+  if (player != undefined) {
+    player.unbindKeyDown();
+    player = null;
+  }
+  var e = document.getElementById("diffSelect");
+  difficulty = e.options[e.selectedIndex].value;
+  cellSize = mazeCanvas.width / difficulty;
+  maze = new Maze(difficulty, difficulty);
+  draw = new DrawMaze(maze, ctx, cellSize, finishSprite);
+  player = new Player(maze, mazeCanvas, cellSize, displayVictoryMess, sprite);
+  if (document.getElementById("mazeContainer").style.opacity < "100") {
+    document.getElementById("mazeContainer").style.opacity = "100";
   }
 }

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./styling & js/style.css" />
+    <title>Maze Gen</title>
+  </head>
+  <body>
+    <div id="page">
+      <div id="Message-container">
+        <div id="message">
+          <h1>Congratulations!</h1>
+          <p>You are done.</p>
+          <p id="moves"></p>
+          <input
+            type="button"
+            id="okBtn"
+            onclick="toggleVisability('Message-container')"
+            value="Cool!"
+          />
+        </div>
+      </div>
+
+      <br />
+
+      <div id="menu">
+        <div class="custom-select">
+          <select id="diffSelect">
+            <option value="10">Easy</option>
+            <option value="15">Medium</option>
+            <option value="25">Hard</option>
+            <option value="38">Extreme</option>
+          </select>
+        </div>
+        <input
+          type="button"
+          id="startMazeBtn"
+          onclick="makeMaze()"
+          value="Start"
+        />
+      </div>
+
+      <div id="view">
+        <div id="mazeContainer">
+          <canvas
+            id="mazeCanvas"
+            class="border"
+            width="1100"
+            height="1100"
+          ></canvas>
+        </div>
+      </div>
+      <p id="instructions">Use arrow keys to move the key to the house!</p>
+    </div>
+    <script src="./styling & js/maze.js"></script>
+  </body>
+</html>
